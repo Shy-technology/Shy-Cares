@@ -72,7 +72,7 @@ function App() {
           className="w-full h-64 object-cover rounded-t-2xl"
         />
         <div className="p-4 space-y-2">
-          <h2 className="text-xl font-bold">{campaign.title}</h2>
+          <h2 className="text-xl font-bold">🐾{campaign.title}</h2>
           <p className="text-gray-700">{campaign.description}</p>
           <p className="font-semibold text-indigo-600">Target: {campaign.target}</p>
           <button className="w-full mt-4 bg-green-500 text-white py-2 rounded-xl text-lg hover:bg-green-600 transition">
