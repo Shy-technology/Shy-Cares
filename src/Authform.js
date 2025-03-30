@@ -13,10 +13,10 @@ export default function AuthForm({ onLogin }) {
       let userCred;
       if (isSignup) {
         userCred = await createUserWithEmailAndPassword(auth, email, password);
-        alert("✅ Account created!");
+        alert("✅Account created!");
       } else {
         userCred = await signInWithEmailAndPassword(auth, email, password);
-        alert("✅ Logged in!");
+        alert("✅Logged in!");
       }
       onLogin(userCred.user); // pass user back to App
     } catch (err) {
