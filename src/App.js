@@ -1,15 +1,20 @@
 import { useState, useEffect } from "react";
 import NGOSubmissionForm from "./NGOSubmissionForm";
 import AdminPanel from "./AdminPanel";
+import AuthForm from "./AuthForm";
+import { db, auth } from "./firebase";
+import { onAuthStateChanged, signOut } from "firebase/auth";
 import { collection, query, where, getDocs } from "firebase/firestore";
-import { db } from "./firebase";
 
 function App() {
   const [view, setView] = useState("public");
   const [campaigns, setCampaigns] = useState([]);
   const [index, setIndex] = useState(0);
+  const [user, setUser] = useState(null); // 🔐 Firebase Auth user
 
-  // ✅ Load approved campaigns from Firestore
+  const campaign = campaigns[index];
+
+  // 🔄 Load approved campaigns
   useEffect(() => {
     const fetchCampaigns = async () => {
       const q = query(collection(db, "campaigns"), where("approved", "==", true));
@@ -21,16 +26,19 @@ function App() {
     fetchCampaigns();
   }, []);
 
-  const campaign = campaigns[index];
+  // 🔐 Check for logged-in user
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+    });
+    return () => unsubscribe();
+  }, []);
 
   // 🟢 Admin View
   if (view === "admin") {
     return (
       <div>
-        <button
-          onClick={() => setView("public")}
-          className="text-blue-600 underline m-4"
-        >
+        <button onClick={() => setView("public")} className="text-blue-600 underline m-4">
           ← Back to Public
         </button>
         <AdminPanel />
@@ -40,20 +48,28 @@ function App() {
 
   // 🐾 NGO Submission View
   if (view === "ngo") {
+    // Not logged in → Show Auth
+    if (!user) {
+      return <AuthForm onLogin={setUser} />;
+    }
+
+    // Logged in → Show submission form
     return (
       <div>
-        <button
-          onClick={() => setView("public")}
-          className="text-blue-600 underline m-4"
-        >
-          ← Back to Campaigns
-        </button>
+        <div className="flex justify-between items-center px-4 mt-4">
+          <button onClick={() => setView("public")} className="text-blue-600 underline">
+            ← Back to Campaigns
+          </button>
+          <button onClick={() => signOut(auth)} className="text-red-600 underline text-sm">
+            Logout
+          </button>
+        </div>
         <NGOSubmissionForm />
       </div>
     );
   }
 
-  // ⏳ Loading State or No Campaigns
+  // ⏳ No campaigns yet
   if (!campaign) {
     return (
       <div className="h-screen flex items-center justify-center">
@@ -62,7 +78,7 @@ function App() {
     );
   }
 
-  // 👤 Public Donor View
+  // 👤 Public View
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-lg w-full max-w-md">
@@ -72,7 +88,7 @@ function App() {
           className="w-full h-64 object-cover rounded-t-2xl"
         />
         <div className="p-4 space-y-2">
-          <h2 className="text-xl font-bold">🐾{campaign.title}</h2>
+          <h2 className="text-xl font-bold">🐾 {campaign.title}</h2>
           <p className="text-gray-700">{campaign.description}</p>
           <p className="font-semibold text-indigo-600">Target: {campaign.target}</p>
           <button className="w-full mt-4 bg-green-500 text-white py-2 rounded-xl text-lg hover:bg-green-600 transition">
