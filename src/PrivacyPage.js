@@ -1,10 +1,13 @@
-export default function PrivacyPage() {
-    return (
-      <div className="max-w-3xl mx-auto p-4 text-gray-800">
-        <h1 className="text-2xl font-bold mb-4">Privacy Policy</h1>
-        <p>This Privacy Policy outlines how Prescom Technologies Private Limited (operating ShyCares)...</p>
-        {/* Paste the full privacy content we drafted earlier */}
-      </div>
-    );
-  }
-  
+import React from "react";
+
+const PrivacyPage = () => {
+  return (
+    <div className="p-6 max-w-3xl mx-auto text-sm leading-relaxed space-y-4">
+      <h1 className="text-xl font-bold mb-2">Privacy Policy</h1>
+      <p>At ShyCares, operated by Prescom Technologies Private Limited, we value your privacy...</p>
+      {/* more content */}
+    </div>
+  );
+};
+
+export default PrivacyPage;
