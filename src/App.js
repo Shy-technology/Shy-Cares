@@ -1,6 +1,6 @@
 import CampaignCard from "./CampaignCard";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import TermsPage from "./TermsPage";
+import TermsPage from "./Termspage";
 import PrivacyPage from "./PrivacyPage";
 import RefundPage from "./RefundPage";
 import { useState, useEffect } from "react";
