@@ -1,6 +1,6 @@
 import CampaignCard from "./CampaignCard";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import TermsPage from "./TermsPage";
+import TnCs from "./TnCs";
 import PrivacyPage from "./PrivacyPage";
 import RefundPage from "./RefundPage";
 import { useState, useEffect } from "react";
@@ -99,7 +99,7 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/terms" element={<TermsPage />} />
+        <Route path="/terms" element={<TnCs />} />
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/refund" element={<RefundPage />} />
 
