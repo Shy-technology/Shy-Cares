@@ -1,5 +1,5 @@
+import React from "react";
 import { useState } from "react";
-
 export default function CampaignCard({ campaign }) {
   const [tab, setTab] = useState("about");
 
