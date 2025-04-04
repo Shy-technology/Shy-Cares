@@ -103,47 +103,51 @@ function App() {
         <Route path="/terms" element={<TnCs />} />
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/refund" element={<RefundPage />} />
-
+  
         <Route
           path="*"
           element={
-            <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4">
-              <CampaignCard campaign={campaign} />
-
-              {/* Nav Buttons */}
-              <button
-                className="mt-4 text-blue-600 underline"
-                onClick={() => setIndex((prev) => (prev + 1) % campaigns.length)}
-              >
-                → See Next Campaign
-              </button>
-
-              <button
-                className="mt-2 text-sm text-gray-600 underline"
-                onClick={() => setView("ngo")}
-              >
-                🐾 Submit a Campaign
-              </button>
-
-              <button
-                className="mt-2 text-sm text-red-500 underline"
-                onClick={() => setView("admin")}
-              >
-                🔐 Admin Panel
-              </button>
-
-              {/* Footer */}
-              <div className="mt-6 text-xs text-center text-gray-500 space-x-4">
-                <a href="/terms" className="underline">Terms</a>
-                <a href="/privacy" className="underline">Privacy</a>
-                <a href="/refund" className="underline">Refunds</a>
+            <div className="min-h-screen bg-[#f0f3ec] flex flex-col justify-between">
+              <div className="flex-1 flex items-center justify-center px-4 py-6">
+                <div className="w-full max-w-md">
+                  <CampaignCard campaign={campaign} />
+                </div>
+              </div>
+  
+              <div className="flex flex-col items-center pb-6 space-y-2">
+                <button
+                  className="text-indigo-600 text-sm underline"
+                  onClick={() => setIndex((prev) => (prev + 1) % campaigns.length)}
+                >
+                  → See Next Campaign
+                </button>
+  
+                <button
+                  className="text-sm text-gray-700 underline"
+                  onClick={() => setView("ngo")}
+                >
+                  🐾 Submit a Campaign
+                </button>
+  
+                <button
+                  className="text-sm text-red-500 underline"
+                  onClick={() => setView("admin")}
+                >
+                  🔐 Admin Panel
+                </button>
+  
+                {/* Footer */}
+                <div className="pt-4 text-xs text-center text-gray-500 space-x-4">
+                  <a href="/terms" className="underline">Terms</a>
+                  <a href="/privacy" className="underline">Privacy</a>
+                  <a href="/refund" className="underline">Refunds</a>
+                </div>
               </div>
             </div>
           }
         />
       </Routes>
     </Router>
-  );
+  );  
 }
-
 export default App;
