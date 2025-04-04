@@ -1,131 +1,195 @@
-import React from "react";
+import React, { useState } from "react";
 import { db, storage } from "./firebase";
-import { addDoc, collection, Timestamp } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { useState } from "react";
-export default function NGOSubmissionForm() {
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { v4 as uuidv4 } from "uuid";
+
+function NGOSubmissionForm() {
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
     title: "",
     description: "",
     target: "",
-    image: null,
-    aadhar: null,
-    pan: null,
+    fundBreakdown: {
+      food: "",
+      medicines: "",
+      surgery: "",
+      hospital: "",
+      supplements: "",
+    },
+    imageFiles: [],
+    videoFile: null,
   });
 
-  const handleChange = (e) => {
-    const { name, value, files } = e.target;
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    if (name in formData.fundBreakdown) {
+      setFormData((prev) => ({
+        ...prev,
+        fundBreakdown: {
+          ...prev.fundBreakdown,
+          [name]: value,
+        },
+      }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const handleImageChange = (e) => {
     setFormData((prev) => ({
       ...prev,
-      [name]: files ? files[0] : value,
+      imageFiles: Array.from(e.target.files),
+    }));
+  };
+
+  const handleVideoChange = (e) => {
+    setFormData((prev) => ({
+      ...prev,
+      videoFile: e.target.files[0],
     }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitting(true);
+
     try {
-      // 1. Upload files to Storage
-      const imageRef = ref(storage, `campaigns/images/${formData.image.name}`);
-      const aadharRef = ref(storage, `campaigns/kyc/aadhar/${formData.aadhar.name}`);
-      const panRef = ref(storage, `campaigns/kyc/pan/${formData.pan.name}`);
-  
-      const [imageSnap, aadharSnap, panSnap] = await Promise.all([
-        uploadBytes(imageRef, formData.image),
-        uploadBytes(aadharRef, formData.aadhar),
-        uploadBytes(panRef, formData.pan),
-      ]);
-  
-      // 2. Get download URLs
-      const [imageURL, aadharURL, panURL] = await Promise.all([
-        getDownloadURL(imageSnap.ref),
-        getDownloadURL(aadharSnap.ref),
-        getDownloadURL(panSnap.ref),
-      ]);
-  
-      // 3. Save campaign data to Firestore
+      // Upload images
+      const imageURLs = await Promise.all(
+        formData.imageFiles.map(async (file) => {
+          const imageRef = ref(storage, `campaign-images/${uuidv4()}`);
+          await uploadBytes(imageRef, file);
+          return await getDownloadURL(imageRef);
+        })
+      );
+
+      // Upload video
+      let videoURL = "";
+      if (formData.videoFile) {
+        const videoRef = ref(storage, `campaign-videos/${uuidv4()}`);
+        await uploadBytes(videoRef, formData.videoFile);
+        videoURL = await getDownloadURL(videoRef);
+      }
+
+      // Create campaign doc
       await addDoc(collection(db, "campaigns"), {
-        name: formData.name,
-        email: formData.email,
         title: formData.title,
         description: formData.description,
         target: formData.target,
-        imageURL,
-        aadharURL,
-        panURL,
+        fundBreakdown: formData.fundBreakdown,
+        imageURLs: imageURLs,
+        videoURL: videoURL,
         approved: false,
-        submittedAt: Timestamp.now(),
+        createdAt: serverTimestamp(),
+        updates: [],
       });
-  
-      alert("✅ Campaign submitted successfully!");
-    } catch (error) {
-      console.error("Error submitting campaign:", error);
-      alert("❌ Failed to submit campaign. Please try again.");
+
+      alert("Campaign submitted! Awaiting admin approval.");
+      setFormData({
+        title: "",
+        description: "",
+        target: "",
+        fundBreakdown: {
+          food: "",
+          medicines: "",
+          surgery: "",
+          hospital: "",
+          supplements: "",
+        },
+        imageFiles: [],
+        videoFile: null,
+      });
+    } catch (err) {
+      console.error("Error submitting campaign:", err);
+      alert("Something went wrong. Please try again.");
+    } finally {
+      setSubmitting(false);
     }
   };
+
   return (
-    <div className="max-w-lg mx-auto p-6 bg-white shadow-lg rounded-xl mt-10">
-      <h2 className="text-2xl font-bold mb-4">Submit a Campaign</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <input
-          type="text"
-          name="name"
-          placeholder="Your Name / NGO Name"
-          onChange={handleChange}
-          className="w-full p-2 border rounded"
-          required
-        />
-        <input
-          type="email"
-          name="email"
-          placeholder="Your Email"
-          onChange={handleChange}
-          className="w-full p-2 border rounded"
-          required
-        />
+    <div className="min-h-screen bg-[#f0f3ec] px-4 py-6">
+      <form onSubmit={handleSubmit} className="space-y-6 max-w-md mx-auto">
+        <h2 className="text-2xl font-bold text-center text-[#040404]">🐾 Submit Your Campaign</h2>
+
         <input
           type="text"
           name="title"
           placeholder="Campaign Title"
-          onChange={handleChange}
-          className="w-full p-2 border rounded"
+          value={formData.title}
+          onChange={handleInputChange}
           required
+          className="w-full p-3 rounded-xl border border-gray-300"
         />
+
         <textarea
           name="description"
-          placeholder="Describe the cause..."
-          onChange={handleChange}
-          className="w-full p-2 border rounded"
+          placeholder="Describe the animal's story and situation..."
+          value={formData.description}
+          onChange={handleInputChange}
+          rows={4}
           required
+          className="w-full p-3 rounded-xl border border-gray-300"
         />
+
         <input
           type="number"
           name="target"
-          placeholder="Target Amount (INR)"
-          onChange={handleChange}
-          className="w-full p-2 border rounded"
+          placeholder="Amount Needed (₹)"
+          value={formData.target}
+          onChange={handleInputChange}
           required
+          className="w-full p-3 rounded-xl border border-gray-300"
         />
-        <label className="block">
-          Upload Campaign Image:
-          <input type="file" name="image" onChange={handleChange} className="mt-1" required />
-        </label>
-        <label className="block">
-          Upload Aadhaar (PDF/Image):
-          <input type="file" name="aadhar" onChange={handleChange} className="mt-1" required />
-        </label>
-        <label className="block">
-          Upload PAN Card (PDF/Image):
-          <input type="file" name="pan" onChange={handleChange} className="mt-1" required />
-        </label>
+
+        <div className="bg-white p-4 rounded-xl shadow-sm space-y-3 border border-gray-200">
+          <h3 className="font-semibold text-[#691a47]">💸 Fund Usage Breakdown</h3>
+          {Object.keys(formData.fundBreakdown).map((key) => (
+            <input
+              key={key}
+              type="number"
+              name={key}
+              placeholder={`₹ for ${key.charAt(0).toUpperCase() + key.slice(1)}`}
+              value={formData.fundBreakdown[key]}
+              onChange={handleInputChange}
+              className="w-full p-2 rounded border border-gray-300 text-sm"
+            />
+          ))}
+        </div>
+
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700">Upload Photos (up to 5)</label>
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleImageChange}
+            className="w-full"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700">Upload a Video (optional)</label>
+          <input
+            type="file"
+            accept="video/*"
+            onChange={handleVideoChange}
+            className="w-full"
+          />
+        </div>
+
         <button
           type="submit"
-          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
+          disabled={submitting}
+          className="w-full bg-[#691a47] text-white py-3 rounded-xl font-semibold hover:bg-[#57123a] transition"
         >
-          Submit Campaign
+          {submitting ? "Submitting..." : "Submit Campaign"}
         </button>
       </form>
     </div>
   );
 }
+
+export default NGOSubmissionForm;

@@ -1,10 +1,10 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
 import CampaignCard from "./CampaignCard";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import CampaignDetail from "./CampaignDetail";
 import TnCs from "./TnCs";
 import PrivacyPage from "./PrivacyPage";
 import RefundPage from "./RefundPage";
-import { useState, useEffect } from "react";
 import NGOSubmissionForm from "./NGOSubmissionForm";
 import AdminPanel from "./AdminPanel";
 import AuthForm from "./AuthForm";
@@ -24,7 +24,7 @@ function App() {
     const fetchCampaigns = async () => {
       const q = query(collection(db, "campaigns"), where("approved", "==", true));
       const snapshot = await getDocs(q);
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
       setCampaigns(data);
     };
     fetchCampaigns();
@@ -37,27 +37,6 @@ function App() {
     return () => unsubscribe();
   }, []);
 
-  const shareCampaign = (platform, campaign) => {
-    const shareURL = `https://www.shycares.org/?id=${campaign.id}`;
-    const text = `Support this cause on ShyCares: ${campaign.title}`;
-    let url = "";
-    switch (platform) {
-      case "facebook":
-        url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareURL)}`;
-        break;
-      case "whatsapp":
-        url = `https://wa.me/?text=${encodeURIComponent(text + " " + shareURL)}`;
-        break;
-      case "twitter":
-        url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareURL)}`;
-        break;
-      default:
-        return;
-    }
-    window.open(url, "_blank");
-  };
-
-  // 🔐 Admin View
   if (view === "admin") {
     return (
       <div>
@@ -69,7 +48,6 @@ function App() {
     );
   }
 
-  // 🐾 NGO Submission View
   if (view === "ngo") {
     if (!user) return <AuthForm onLogin={setUser} />;
     return (
@@ -87,7 +65,6 @@ function App() {
     );
   }
 
-  // ⏳ No campaigns loaded yet
   if (!campaign) {
     return (
       <div className="h-screen flex items-center justify-center">
@@ -96,48 +73,42 @@ function App() {
     );
   }
 
-  // 👤 Public Donor View
   return (
     <Router>
       <Routes>
         <Route path="/terms" element={<TnCs />} />
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/refund" element={<RefundPage />} />
-  
+
+        <Route
+          path="/campaign/:id"
+          element={<CampaignDetail campaigns={campaigns} />}
+        />
+
         <Route
           path="*"
           element={
-            <div className="min-h-screen bg-[#f0f3ec] flex flex-col justify-between">
-              <div className="flex-1 flex items-center justify-center px-4 py-6">
-                <div className="w-full max-w-md">
-                  <CampaignCard campaign={campaign} />
-                </div>
-              </div>
-  
-              <div className="flex flex-col items-center pb-6 space-y-2">
+            <div className="min-h-screen bg-[#f0f3ec] flex flex-col items-center justify-between p-4">
+              <CampaignCard campaign={campaign} />
+
+              <div className="w-full max-w-md text-center mt-6 space-y-2">
                 <button
-                  className="text-indigo-600 text-sm underline"
+                  className="text-blue-700 underline"
                   onClick={() => setIndex((prev) => (prev + 1) % campaigns.length)}
                 >
                   → See Next Campaign
                 </button>
-  
-                <button
-                  className="text-sm text-gray-700 underline"
-                  onClick={() => setView("ngo")}
-                >
-                  🐾 Submit a Campaign
-                </button>
-  
-                <button
-                  className="text-sm text-red-500 underline"
-                  onClick={() => setView("admin")}
-                >
-                  🔐 Admin Panel
-                </button>
-  
-                {/* Footer */}
-                <div className="pt-4 text-xs text-center text-gray-500 space-x-4">
+
+                <div className="flex justify-between text-sm text-gray-600 mt-4 px-6">
+                  <button onClick={() => setView("ngo")} className="underline">
+                    🐾 Submit a Campaign
+                  </button>
+                  <button onClick={() => setView("admin")} className="text-red-500 underline">
+                    🔐 Admin Panel
+                  </button>
+                </div>
+
+                <div className="text-xs text-gray-500 space-x-4 mt-6">
                   <a href="/terms" className="underline">Terms</a>
                   <a href="/privacy" className="underline">Privacy</a>
                   <a href="/refund" className="underline">Refunds</a>
@@ -148,6 +119,7 @@ function App() {
         />
       </Routes>
     </Router>
-  );  
+  );
 }
+
 export default App;
