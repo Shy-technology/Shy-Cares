@@ -1,8 +1,14 @@
 {
-    "build": {
-      "env": {
-        "NODE_OPTIONS": "--openssl-legacy-provider"
-      }
+  "build": {
+    "env": {
+      "NODE_OPTIONS": "--openssl-legacy-provider",
+      "NODE_ENV": "production"
     }
-  }
-  
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
